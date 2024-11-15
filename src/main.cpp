@@ -13,19 +13,19 @@ int main()
     using namespace std;
 
     // Variables principales
-    atomic<int> paperclip_count{0};
-    atomic<int> unsold_paperclips{0};
-    atomic<float> price{0.50};
-    atomic<int> marketing_level{0};
-    atomic<float> public_demand{0.16};
-    atomic<float> funds{0.0};
-    atomic<int> marketing_cost{200};
+    int paperclip_count{0};
+    int unsold_paperclips{0};
+    float price{0.50};
+    int marketing_level{0};
+    float public_demand{0.16};
+    float funds{0.0};
+    float marketing_cost{200.0};
 
 
     // Calcul de la Public Demand avec la nouvelle formule
     auto calculate_public_demand = [&]()
     {
-        public_demand = pow(1.2, marketing_level.load()) * (8.0 / price.load());
+        public_demand = pow(1.1, marketing_level) * (8.001 / price);
     };
 
 
@@ -38,32 +38,33 @@ int main()
     // Boutons et leur logique
     auto make_paperclip_button = Button("Make Paperclip", [&]
     {
-        paperclip_count.store(paperclip_count.load() + 1);
-        unsold_paperclips.store(unsold_paperclips.load() + 1);
+        paperclip_count ++;
+        unsold_paperclips ++;
     });
 
-    auto decrease_price_button = Button("Decrease Price", [&]
-    {
-        if (price.load() > 0.01f)
-        {
-            price.store(price.load() - 0.01f);
-            calculate_public_demand();
+    auto decrease_price_button = Button("Increase Price", [&] {
+        float current_price = price;
+        if (current_price > 0.01f) { // Bloque le prix en dessous de 0.01$
+            price -= 0.01f;
+        } else {
+            price = 0.01f; // Assure que le prix ne descend pas sous 0.01$
         }
+        calculate_public_demand(); // Recalculer après modification
     });
 
     auto increase_price_button = Button("Increase Price", [&]
     {
-        price.store(price.load() + 0.01f);
+        price += 0.01f;
         calculate_public_demand();
     });
 
     auto buy_marketing_button = Button("Increase Marketing", [&]
     {
-        if (funds >= marketing_cost.load())
+        if (funds >= marketing_cost)
         {
-            funds -= marketing_cost.load();
+            funds -= marketing_cost;
             ++marketing_level;
-            marketing_cost.store(marketing_cost.load() * 2); // Coût exponentiel
+            marketing_cost *= 2; // Coût exponentiel
             calculate_public_demand();
         }
     });
@@ -81,19 +82,19 @@ int main()
     auto layout = Renderer(button_container, [&]
     {
         return vbox({
-            text("Paperclips: " + to_string(paperclip_count.load())) | bold,
-            text("Unsold Paperclips: " + to_string(unsold_paperclips.load())) | bold,
-            text("Funds: $" + to_string(funds.load()).substr(0, 5)) | bold | color(Color::Green),
+            text("Paperclips: " + to_string(paperclip_count)) | bold,
+            text("Unsold Paperclips: " + to_string(unsold_paperclips)) | bold,
+            text("Funds: $" + format("({:.2f})",funds)) | bold | color(Color::Green),
             separator(),
-            text("Price: $" + to_string(price.load()).substr(0, 4)) | color(Color::Yellow),
+            text("Price: $" + format("({:.2f})",price)) | color(Color::Yellow),
             hbox({
                 decrease_price_button->Render() | flex,
                 increase_price_button->Render() | flex,
             }),
             separator(),
-            text("Marketing Level: " + to_string(marketing_level.load())) | bold,
-            text("Next Marketing Cost: $" + to_string(marketing_cost.load())) | color(Color::Yellow),
-            text("Public Demand: " + to_string(static_cast<int>(public_demand.load())) + "%") | bold | color(
+            text("Marketing Level: " + to_string(marketing_level)) | bold,
+            text("Next Marketing Cost: $" + format("({:.2f})",marketing_cost)) | color(Color::Yellow),
+            text("Public Demand: " + to_string(static_cast<int>(public_demand)) + "%") | bold | color(
                 Color::Cyan),
             buy_marketing_button->Render(),
             separator(),
@@ -111,12 +112,12 @@ int main()
         {
             this_thread::sleep_for(chrono::seconds(1)); // Simulation de temps
             screen.PostEvent(Event::Custom);
-            int to_sell = static_cast<int>(public_demand.load()); // Basé sur PD
-            if (unsold_paperclips.load() > 0 && to_sell > 0)
+            int to_sell = static_cast<int>(public_demand); // Basé sur PD
+            if (unsold_paperclips > 0 && to_sell > 0)
             {
-                int sold = min(unsold_paperclips.load(), to_sell);
+                int sold = min(unsold_paperclips, to_sell);
                 unsold_paperclips -= sold;
-                funds += sold * price.load();
+                funds += sold * price;
             }
         }
     };
