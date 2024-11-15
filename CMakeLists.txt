@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.29)
 
 # Nom du projet et de l'exécutable généré
-project(template_cpp_cmake)
+project(cpp-paperclip-game)
 
 # Forcer l'utilisation de C++ 23
 set(CMAKE_CXX_STANDARD 23)
@@ -16,7 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 # Répertoire contenant les sources des tests unitaires
 set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-
+include(cmake/ftxui.cmake)
 # Pour "import std"
 include(cmake/std.cmake)
 
@@ -24,11 +24,13 @@ include(cmake/std.cmake)
 # Partie à mettre à jour manuellement
 # Liste des fichiers sources des modules des exercices
 set(PROJECT_FILES
-        ${SRC_DIR}/exo1.cppm
+        ${SRC_DIR}/outil1.cppm
+        ${SRC_DIR}/exo2.cppm
 )
 # Liste des fichiers sources des tests unitaires
 set(TEST_FILES
         ${TESTS_DIR}/exo1.cpp
+        ${TESTS_DIR}/exo2.cpp
 )
 # Exécutable principal
 add_executable(${PROJECT_NAME}
@@ -46,6 +48,13 @@ target_sources(${PROJECT_NAME}
         ${PROJECT_FILES}
 )
 
+
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE ftxui::screen
+        PRIVATE ftxui::dom
+        PRIVATE ftxui::component
+)
+
 # Exécutable pour les tests unitaires
 add_executable(tests ${TEST_FILES})
 target_sources(tests
@@ -60,3 +69,7 @@ target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 include(CTest)
 include(Catch)
 catch_discover_tests(tests)
+
+#######################################################
+
+#librairie d'interface visuel
