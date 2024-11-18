@@ -24,13 +24,14 @@ include(cmake/std.cmake)
 # Partie à mettre à jour manuellement
 # Liste des fichiers sources des modules des exercices
 set(PROJECT_FILES
-        ${SRC_DIR}/outil1.cppm
-        ${SRC_DIR}/exo2.cppm
+        ${SRC_DIR}/game.cppm
+        ${SRC_DIR}/ui.cppm
+        ${SRC_DIR}/timer_thread.cppm
+        ${SRC_DIR}/auto_clipper_thread.cppm
 )
 # Liste des fichiers sources des tests unitaires
 set(TEST_FILES
-        ${TESTS_DIR}/exo1.cpp
-        ${TESTS_DIR}/exo2.cpp
+
 )
 # Exécutable principal
 add_executable(${PROJECT_NAME}

@@ -1,12 +1,12 @@
+
 #include <ftxui/component/component.hpp>  // For components
 #include <ftxui/component/screen_interactive.hpp>  // For ScreenInteractive
 #include <ftxui/dom/elements.hpp>  // For elements
 #include <thread>  // For std::thread, std::this_thread
 #include <chrono>  // For std::chrono
-#include <atomic>  // For std::atomic
 #include <cmath>   // For std::pow
 #include <string>  // For std::to_string
-
+/*
 int main()
 {
     using namespace ftxui;
@@ -135,3 +135,37 @@ int main()
     screen.Loop(layout);
     return 0;
 }
+*/
+
+import game;
+import ui;
+import timer_thread;
+import auto_clipper_thread;
+
+int main() {
+    Game game;
+
+    auto screen = ftxui::ScreenInteractive::TerminalOutput();
+
+    timer_thread::TimerThread auto_sell_thread(game.getPublicDemand());
+    std::thread([&]() {
+        auto_sell_thread.auto_sell_paperclips(
+            game.getUnsoldPaperclips(),
+            game.getFunds(),
+            game.getPrice(),
+            screen);
+    }).detach();
+
+    auto_clipper_thread::AutoClipper auto_clipper_thread(game.getAutoClipperLevel());
+    std::thread([&]() {
+        auto_clipper_thread.auto_make_paperclips(
+            game.getUnsoldPaperclips(),
+            game.getPaperclipCount(),
+            screen);
+    }).detach();
+
+
+    StartUI(game, screen);
+    return 0;
+}
+
