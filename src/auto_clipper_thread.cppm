@@ -19,15 +19,14 @@ export namespace auto_clipper_thread
         {
         }
 
-        void auto_make_paperclips(int& unsold_paperclips, int& paperclip_count, ftxui::ScreenInteractive& screen)
+        void auto_make_paperclips(ftxui::ScreenInteractive& screen, Game& game)
         {
             while (true)
             {
                 if (autoclipper_level > 0)
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000 / autoclipper_level));
-                    unsold_paperclips ++;
-                    paperclip_count ++;
+                    game.makePaperclip(1);
                 }
                 else
                 {

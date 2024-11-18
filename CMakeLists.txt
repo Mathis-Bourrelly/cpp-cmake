@@ -28,6 +28,7 @@ set(PROJECT_FILES
         ${SRC_DIR}/ui.cppm
         ${SRC_DIR}/timer_thread.cppm
         ${SRC_DIR}/auto_clipper_thread.cppm
+        ${SRC_DIR}/wire_market_thread.cppm
 )
 # Liste des fichiers sources des tests unitaires
 set(TEST_FILES

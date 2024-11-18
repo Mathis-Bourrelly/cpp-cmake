@@ -141,6 +141,7 @@ import game;
 import ui;
 import timer_thread;
 import auto_clipper_thread;
+import wire_market_thread;
 
 int main() {
     Game game;
@@ -158,10 +159,12 @@ int main() {
 
     auto_clipper_thread::AutoClipper auto_clipper_thread(game.getAutoClipperLevel());
     std::thread([&]() {
-        auto_clipper_thread.auto_make_paperclips(
-            game.getUnsoldPaperclips(),
-            game.getPaperclipCount(),
-            screen);
+        auto_clipper_thread.auto_make_paperclips(screen,game);
+    }).detach();
+
+    wire_market_thread::WireMarket wire_market_thread{};
+    std::thread([&]() {
+        wire_market_thread.start_market(screen,game);
     }).detach();
 
 
