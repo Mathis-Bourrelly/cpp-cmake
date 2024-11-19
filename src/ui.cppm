@@ -10,6 +10,10 @@ using namespace ftxui;
 
 export void StartUI(Game& game, auto& screen)
 {
+
+    std::string stock_temp = std::to_string(game.getMinimumStock());
+    std::string price_temp = std::to_string(game.getMaxPrice());
+
     auto make_paperclip_button = Button("Make Paperclip", [&] { game.makePaperclip(1); });
     auto decrease_price_button = Button("Decrease Price", [&] { game.decreasePrice(); });
     auto increase_price_button = Button("Increase Price", [&] { game.increasePrice(); });
@@ -17,8 +21,14 @@ export void StartUI(Game& game, auto& screen)
     auto buy_autoclipper_button = Button("Buy Auto Clipper", [&] { game.buyAutoClipper(); });
     auto buy_wire_button = Button("Buy Wire", [&] { game.buyWire(); });
     auto buy_wire_buyer_button = Button("Buy Wire Buyer", [&] { game.buyWireBuyer(); });
-    auto stock_input = Input(std::to_string(game.getMinimumStock()), "Minimum Stock");
-    auto price_input = Input(std::to_string(game.getMinimumStock()), "Max Price Buy");
+
+    auto stock_input = Input(&stock_temp, "Enter Minimum Stock");
+    auto price_input = Input(&price_temp, "Enter Max Price");
+    auto apply_buyer_button = Button("Apply", [&] {
+                int stock_value = std::stoi(stock_temp);
+                int price_value = std::stoi(price_temp);
+                game.setMinimumStock(stock_value);
+                game.setMaxPrice(price_value);});
 
 
     auto button_container = Container::Vertical({
@@ -31,11 +41,18 @@ export void StartUI(Game& game, auto& screen)
         buy_wire_buyer_button,
         stock_input,
         price_input,
+        apply_buyer_button,
     });
 
     auto layout = Renderer(button_container, [&]
     {
         return vbox({
+            hbox({
+                filler(),
+            text(game.getEventText()) | bgcolor(Color::Yellow) | color(Color::Black) | border,
+                filler(),
+            }),
+            separator(),
             hbox({
                 vbox({
                     text("Paperclips: " + std::to_string(game.getPaperclipCount())),
@@ -74,18 +91,19 @@ export void StartUI(Game& game, auto& screen)
                 }),
                 separator(),
                 vbox({
-                    text("WireBuyer") | color(game.getWireBuyerState() ? Color::Green : Color::Red),
+                    text("Wire Buyer") | color(game.getWireBuyerState() ? Color::Green : Color::Red),
                     text("Cost : $1") | color(Color::Yellow),
                     buy_wire_buyer_button->Render(),
                 }),
                 vbox({
-                    text("Minimum Stock") | flex,
-                    stock_input->Render()| flex,
-                    text("Max Price to Buy in $") | flex,
-                    price_input->Render()| flex,
-                })
-            }) | border
-        });
+                    text("Minimum Stock"),
+                    stock_input->Render() | size(HEIGHT,EQUAL,1),
+                    text("Max Price"),
+                    price_input->Render() | size(HEIGHT,EQUAL,1),
+                }),
+                apply_buyer_button->Render() | size(WIDTH,EQUAL,8),
+            })
+        }) | border;
     });
     screen.Loop(layout);
 }

@@ -41,14 +41,12 @@ export namespace wire_market_thread
             while (true)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
-                if (game.getWireBuyerState() && game.getWireStock() < game.getMinimumStock() && game.getWirePrice() <= game.getMaxPrice()) {
-                    game.buyWire();
-                }
                 if (dist(gen) == 1)
                 {
                     updateWirePrice();
+                }
+                if (game.getWireBuyerState() && game.getWireStock() < game.getMinimumStock() && game.getWirePrice() <= game.getMaxPrice()) {
+                    game.buyWire();
                 }
 
                 syncWirePriceToGame(game);
