@@ -2,7 +2,10 @@ module;
 #include <cmath>
 #include <random>
 #include <chrono>
+import upgrade;
+
 export module game;
+
 
 export class Game
 {
@@ -39,8 +42,20 @@ public:
     void setMinimumStock(int stock);
     int& getMaxPrice();
     void setMaxPrice(int price);
+    void setAutoclipperPerformance(int perf);
+    int getAutoclipperPerformance() const;
     std::string getEventText();
-
+    bool isUpgradePurchased(int id) const;
+    bool purchaseUpgrade(std::shared_ptr<upgrade::Upgrade> upgrade);
+    void buyTrading();
+    bool& getTradingStatus();
+    float& getTradingCash();
+    float& getTradingStocks();
+    float& getTradingTotal();
+    float& getProfitLossRatio();
+    int& getTradingRiskLevel();
+    int& getTradingEngineLevel();
+    std::vector<float>& getStockPrices();
 
 private:
     int paperclip_count;
@@ -62,8 +77,18 @@ private:
     int autoclipper_level;
     float marketing_cost;
     float autoclipper_cost;
+    int autoclipper_performance;
 
+    std::vector<int> purchased_upgrades;
 
+    bool trading_status;
+    float trading_cash; // Argent liquide pour le trading
+    float trading_stocks; // Valeur des actions
+    float trading_total; // Total (cash + stocks)
+    float profit_loss_ratio; // Ratio de profit/perte
+    int trading_risk_level; // Niveau de risque
+    int trading_engine_level; // Niveau de l'engin de trading
+    std::vector<float> stock_prices; // Liste des prix des actions
 };
 
 Game::Game() :
@@ -71,7 +96,7 @@ Game::Game() :
     unsold_paperclips(0),
     price(0.10f),
     public_demand(0.16f),
-    funds(0.0),
+    funds(50.0),
     event("Welcome to Paperclip Game !"),
     wire_price(20.0f),
     wire_stock(1000),
@@ -80,8 +105,15 @@ Game::Game() :
     max_price(20),
     marketing_level(0),
     autoclipper_level(0),
-    marketing_cost(200.0f),
-    autoclipper_cost(5.0f)
+    marketing_cost(50.0f),
+    autoclipper_cost(5.0f),
+    autoclipper_performance(0),
+    trading_cash(0),
+    trading_stocks(0),
+    trading_total(0),
+    profit_loss_ratio(0.5f),
+    trading_risk_level(7),
+    trading_engine_level(0)
 {
     calculatePublicDemand();
 }
@@ -89,18 +121,16 @@ Game::Game() :
 
 void Game::makePaperclip(const int number)
 {
-    if(wire_stock > 0)
+    if (wire_stock > 0)
     {
-        paperclip_count+= number;
-        unsold_paperclips+= number;
+        paperclip_count += number;
+        unsold_paperclips += number;
         wire_stock -= number;
     }
-    switch (paperclip_count) {
-    case 1000:
-        event = "1000 paperclip created! New upgrade unlocked!";
-        break;
+    switch (paperclip_count)
+    {
     case 3000:
-        event = "2000 paperclip created! New upgrade unlocked!";
+        event = "3000 paperclip created! New upgrade unlocked!";
         break;
     case 5000:
         event = "5000 paperclip created! New upgrade unlocked!";
@@ -108,21 +138,22 @@ void Game::makePaperclip(const int number)
     case 10000:
         event = "10000 paperclip created! New upgrade unlocked!";
         break;
-    case 50000:
-        event = "50000 paperclip created! New upgrade unlocked!";
-        break;
     default:
-        if (paperclip_count % 100000 == 0 && paperclip_count >= 100000) {
+        if (paperclip_count % 100000 == 0 && paperclip_count >= 100000)
+        {
             event = std::to_string(paperclip_count) + " paperclips created!";
-        } else if (paperclip_count % 10000 == 0 && paperclip_count >= 10000) {
+        }
+        else if (paperclip_count % 10000 == 0 && paperclip_count >= 10000)
+        {
             event = std::to_string(paperclip_count) + " paperclips created!";
-        } else if (paperclip_count % 1000 == 0) {
+        }
+        else if (paperclip_count % 1000 == 0)
+        {
             event = std::to_string(paperclip_count) + " paperclips created!";
         }
         break;
     }
 }
-
 
 
 void Game::increasePrice()
@@ -159,26 +190,58 @@ void Game::buyAutoClipper()
     }
 }
 
-void Game::buyWire() {
-    if (funds >= wire_price) {
+void Game::buyWire()
+{
+    if (funds >= wire_price)
+    {
         funds -= wire_price;
         wire_stock += 1000;
     }
 }
 
-void Game::buyWireBuyer() {
+void Game::buyWireBuyer()
+{
     if (wire_buyer == false)
     {
-        if (funds >= 1) {
-            funds -= 1;
+        if (funds >= 100)
+        {
+            funds -= 100;
             wire_buyer = true;
         }
+    }
+}
+
+void Game::buyTrading()
+{
+    if (trading_status == false)
+    {
+        trading_status = true;
     }
 }
 
 void Game::calculatePublicDemand()
 {
     public_demand = std::pow(1.1, marketing_level) * (8.001f / price);
+}
+
+// Vérifie si une amélioration est achetée
+bool Game::isUpgradePurchased(int id) const
+{
+    return std::find(purchased_upgrades.begin(), purchased_upgrades.end(), id) != purchased_upgrades.end();
+}
+
+// Achète une amélioration
+bool Game::purchaseUpgrade(const std::shared_ptr<upgrade::Upgrade> upgrade)
+{
+    if (funds >= upgrade->cost && paperclip_count >= upgrade->paperclip_requirement &&
+        !isUpgradePurchased(upgrade->id))
+    {
+        funds -= upgrade->cost;
+        purchased_upgrades.push_back(upgrade->id);
+        setAutoclipperPerformance(upgrade->perf);
+        return true;
+    }
+    return false;
 }
 
 int& Game::getPaperclipCount() { return paperclip_count; }
@@ -195,7 +258,17 @@ float Game::getWirePrice() const { return wire_price; }
 int Game::getWireStock() const { return wire_stock; }
 bool Game::getWireBuyerState() const { return wire_buyer; }
 int& Game::getMinimumStock() { return minimum_stock; }
-void Game::setMinimumStock(int stock ) { minimum_stock = stock; }
+void Game::setMinimumStock(int stock) { minimum_stock = stock; }
 int& Game::getMaxPrice() { return max_price; }
 void Game::setMaxPrice(int price) { max_price = price; }
+void Game::setAutoclipperPerformance(int perf) { autoclipper_performance = perf; }
+int Game::getAutoclipperPerformance() const { return autoclipper_performance; }
 std::string Game::getEventText() { return event; }
+bool& Game::getTradingStatus() { return trading_status; }
+float& Game::getTradingCash() { return trading_cash; }
+float& Game::getTradingStocks() { return trading_stocks; }
+float& Game::getTradingTotal() { return trading_total; }
+float& Game::getProfitLossRatio() { return profit_loss_ratio; }
+int& Game::getTradingRiskLevel() { return trading_risk_level; }
+int& Game::getTradingEngineLevel() { return trading_engine_level; }
+std::vector<float>& Game::getStockPrices() { return stock_prices; }

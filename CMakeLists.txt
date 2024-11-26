@@ -24,11 +24,13 @@ include(cmake/std.cmake)
 # Partie à mettre à jour manuellement
 # Liste des fichiers sources des modules des exercices
 set(PROJECT_FILES
-        ${SRC_DIR}/game.cppm
-        ${SRC_DIR}/ui.cppm
-        ${SRC_DIR}/timer_thread.cppm
-        ${SRC_DIR}/auto_clipper_thread.cppm
-        ${SRC_DIR}/wire_market_thread.cppm
+        ${SRC_DIR}/game.cpp
+        ${SRC_DIR}/ui.cpp
+        ${SRC_DIR}/timer_thread.cpp
+        ${SRC_DIR}/auto_clipper_thread.cpp
+        ${SRC_DIR}/wire_market_thread.cpp
+        ${SRC_DIR}/upgrade.cpp
+        ${SRC_DIR}/trading_thread.cpp
 )
 # Liste des fichiers sources des tests unitaires
 set(TEST_FILES

@@ -1,6 +1,7 @@
 
 #include <ftxui/component/screen_interactive.hpp>  // For ScreenInteractive
 #include <thread>  // For std::thread, std::this_thread
+#include <windows.h>
 
 
 import game;
@@ -8,8 +9,17 @@ import ui;
 import timer_thread;
 import auto_clipper_thread;
 import wire_market_thread;
+import trading_thread;
+
+
+#include <windows.h>
+
+
 
 int main() {
+    SMALL_RECT WinRect = {0, 0, 110, 40};   //New dimensions for window in 8x12 pixel chars
+    SMALL_RECT* WinSize = &WinRect;
+    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), true, WinSize);   //Set new size for window
     Game game;
 
     auto screen = ftxui::ScreenInteractive::TerminalOutput();
@@ -31,13 +41,20 @@ int main() {
     }).detach();
 
     //thread for wire market
-    wire_market_thread::WireMarket wire_market_thread{};
+    WireMarket wire_market_thread{};
     std::thread([&]() {
         wire_market_thread.start_market(screen,game);
     }).detach();
 
+    TradingThread trading_thread(game);
+    std::thread([&]() {
+        trading_thread.start(screen);
+    }).detach();
 
-    StartUI(game, screen);
+    trading_thread.depositFunds();
+    StartUI(game,trading_thread,screen);
+
     return 0;
+
 }
 
