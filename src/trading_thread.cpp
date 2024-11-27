@@ -1,135 +1,140 @@
+/*
 module;
-#include <vector>
-#include <random>
-#include <thread>
-#include <chrono>
 #include <iostream>
-#include <ftxui/component/screen_interactive.hpp>  // For ScreenInteractive
-
+#include <random>
+#include <chrono>
+#include <thread>
+#include <format>  // C++23 pour formater les chaînes de caractères
 
 export module trading_thread;
 
-import game;
+import game;  // Importation du module Game
 
-export class TradingThread
-{
+export class TradingThread {
 public:
     TradingThread(Game& game);
 
-    // Thread management
-    void start(ftxui::ScreenInteractive& screen);
-    void stop();
-
-    // Core trading operations
-    void depositFunds();
+    void depositFunds(float amount);
     void withdrawFunds();
-    void updateStocks();
-
-    void setRiskLevel(int risk); // 1 = High, 5 = Medium, 7 = Low
-    int getRiskLevel() const;
-
-    // Upgrade investment engine
-    void upgradeEngine();
+    void setRiskLevel(int level);
+    void start(auto& screen);
 
 private:
-    Game& game;
+    Game& game;          // Référence au jeu
+    float cash;          // Fonds du joueur
+    float investment;    // Argent investi dans la bourse
+    float market_price;  // Prix actuel de la bourse
+    float buy_price;     // Prix d'achat de la bourse
+    int risk_level;      // Niveau de risque (1: faible, 2: moyen, 3: élevé)
     std::random_device rd;
     std::mt19937 gen;
 
-    float calculateStockChange(float price, float fluctuation_factor);
+    void updateMarketPrice();
+    float getRiskMultiplier();
+    void displayStatus();
 };
 
+// Constructeur de TradingThread
 TradingThread::TradingThread(Game& game)
-    : game(game), gen(rd())
-{
-}
+    : game(game), cash(0.0f), investment(0.0f), market_price(100.0f), buy_price(0.0f), risk_level(2), gen(rd()) {}
 
-void TradingThread::start(ftxui::ScreenInteractive& screen)
-{
-        while (true)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Update every 2.5 seconds
-            updateStocks();
-            screen.RequestAnimationFrame();
-        }
-}
-
-
-void TradingThread::depositFunds()
-{
-    float amount = game.getFunds();
-    // Le montant à déposer est égal à l'argent disponible (funds)
-    game.getTradingCash() += amount;
-    game.getFunds() = 0; // Retirer tout l'argent du portefeuille du joueur
-
-    // Calculer la nouvelle valeur des stocks à partir de l'argent déposé
-    float stock_value = amount * (1 + game.getProfitLossRatio()); // Le profit/perte est calculé ici
-    game.getTradingStocks() += stock_value;
-
-    // Calculer la nouvelle valeur totale (cash + stocks)
-    game.getTradingTotal() = game.getTradingCash() + game.getTradingStocks();
-}
-
-void TradingThread::withdrawFunds()
-{
-    // Retirer tout l'argent en cash (pas les stocks)
-    game.getFunds() += game.getTradingCash();
-    game.getTradingCash() = 0; // Mettre les fonds du marché à 0
-    game.getTradingTotal() = game.getTradingCash() + game.getTradingStocks();
-}
-
-void TradingThread::updateStocks()
-{
-    std::uniform_real_distribution<float> random_change(0.0f, 1.0f);
-    float fluctuation_factor;
-
-    // Calculer le facteur de fluctuation selon le risque
-    switch (game.getTradingRiskLevel()) {
-    case 0: fluctuation_factor = 0.05f; break; // Low risk
-    case 1: fluctuation_factor = 0.1f; break;  // Medium risk
-    case 2: fluctuation_factor = 0.15f; break; // High risk
-    default: fluctuation_factor = 0.05f; break; // Default to Low risk
+// Déposer des fonds dans la bourse
+void TradingThread::depositFunds(float amount) {
+    if (amount <= 0.0f) {
+        std::cout << "Invalid deposit amount!" << std::endl;
+        return;
+    }
+    if (cash < amount) {
+        std::cout << "Not enough cash available!" << std::endl;
+        return;
+    }
+    if (investment > 0.0f) {
+        std::cout << "You already have an active investment! Withdraw first." << std::endl;
+        return;
     }
 
-    // Mettre à jour les prix des actions
-    for (auto& price : game.getStockPrices())
-    {
-        if (random_change(gen) < 0.6f) // 60% de chance de fluctuation
-        {
-            float price_change = calculateStockChange(price, fluctuation_factor);
-            price += price_change;
+    investment = amount;
+    cash -= amount;
+    buy_price = market_price;
 
-            // Enregistrer l'effet sur les stocks et mettre à jour les valeurs
-            game.getTradingStocks() += price_change;
-            game.getTradingTotal() = game.getTradingCash() + game.getTradingStocks();
-        }
+    std::cout << std::format("Invested {:.2f} at market price {:.2f}", amount, market_price) << std::endl;
+}
+
+// Retirer les fonds de la bourse
+void TradingThread::withdrawFunds() {
+    if (investment <= 0.0f) {
+        std::cout << "No active investment to withdraw!" << std::endl;
+        return;
+    }
+
+    float value = (investment / buy_price) * market_price;  // Valeur de l'investissement
+    float profit_or_loss = value - investment;
+
+    cash += value;
+    investment = 0.0f;
+    buy_price = 0.0f;
+
+    std::cout << std::format("Withdrew {:.2f}. Profit/Loss: {:.2f}", value, profit_or_loss) << std::endl;
+}
+
+// Définir le niveau de risque
+void TradingThread::setRiskLevel(int level) {
+    if (level >= 1 && level <= 3) {
+        risk_level = level;
+        std::cout << std::format("Risk level set to {}", risk_level) << std::endl;
+    } else {
+        std::cout << "Invalid risk level!" << std::endl;
     }
 }
 
-float TradingThread::calculateStockChange(float price, float fluctuation_factor)
-{
-    std::uniform_real_distribution<float> change(-fluctuation_factor * price, fluctuation_factor * price);
-    return change(gen);
-}
+// Mettre à jour le prix de la bourse
+void TradingThread::updateMarketPrice() {
+    float risk_multiplier = getRiskMultiplier();
+    std::uniform_real_distribution<float> price_change_dist(-risk_multiplier, risk_multiplier);
 
-void TradingThread::setRiskLevel(int risk)
-{
-    switch (risk)
-    {
-    case 1: game.getTradingRiskLevel() = 7; break; // Low risk
-    case 2: game.getTradingRiskLevel() = 5; break; // Medium risk
-    case 3: game.getTradingRiskLevel() = 1; break; // High risk
-    default: game.getTradingRiskLevel() = 7; break; // Default to Low risk
+    market_price += price_change_dist(gen);
+
+    // Empêcher les prix négatifs
+    if (market_price < 1.0f) {
+        market_price = 1.0f;
     }
 }
 
-int TradingThread::getRiskLevel() const
-{
-    return game.getTradingRiskLevel();
+// Retourner le multiplicateur de risque
+float TradingThread::getRiskMultiplier() {
+    switch (risk_level) {
+        case 1: return 2.0f;  // Faible risque
+        case 2: return 5.0f;  // Risque moyen
+        case 3: return 10.0f; // Risque élevé
+        default: return 5.0f;
+    }
 }
 
-void TradingThread::upgradeEngine()
-{
-    game.getTradingEngineLevel()++;
-    game.getProfitLossRatio() += 0.01f; // Augmente légèrement le ratio de profit/perte
+// Afficher l'état actuel
+void TradingThread::displayStatus() {
+    std::cout << std::format("Cash: {:.2f} | Market Price: {:.2f} | Investment: {:.2f} | Buy Price: {:.2f}",
+                             cash, market_price, investment, buy_price)
+              << std::endl;
+
+    if (investment > 0.0f) {
+        float value = (investment / buy_price) * market_price;
+        float profit_or_loss = value - investment;
+
+        std::cout << std::format("Current Value: {:.2f} | Profit/Loss: {:.2f}", value, profit_or_loss) << std::endl;
+    }
 }
+
+// Démarrer la simulation de la bourse
+void TradingThread::start(auto& screen) {
+    while (true) {
+        // Mettre à jour le prix du marché
+        updateMarketPrice();
+
+        // Afficher l'état actuel
+        displayStatus();
+
+        // Pause entre les mises à jour
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+    }
+}
+*/

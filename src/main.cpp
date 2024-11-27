@@ -46,13 +46,12 @@ int main() {
         wire_market_thread.start_market(screen,game);
     }).detach();
 
-    TradingThread trading_thread(game);
+    /*TradingThread trading_thread(game);
     std::thread([&]() {
         trading_thread.start(screen);
-    }).detach();
+    }).detach();*/
 
-    trading_thread.depositFunds();
-    StartUI(game,trading_thread,screen);
+    StartUI(game/*,trading_thread*/,screen);
 
     return 0;
 

@@ -96,7 +96,7 @@ Game::Game() :
     unsold_paperclips(0),
     price(0.10f),
     public_demand(0.16f),
-    funds(50.0),
+    funds(0.0),
     event("Welcome to Paperclip Game !"),
     wire_price(20.0f),
     wire_stock(1000),

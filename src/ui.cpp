@@ -11,37 +11,11 @@ import trading_thread;
 
 using namespace ftxui;
 
-std::vector<std::vector<std::string>> convertStockPricesToTable(const std::vector<float>& stockPrices)
+
+export void StartUI(Game& game/*, TradingThread& trading_thread*/, auto& screen)
 {
-    std::vector<std::vector<std::string>> table_data;
-
-    // Ajouter une ligne d'en-tête
-    table_data.push_back({"Index", "Stock Price ($)"});
-
-    // Ajouter les lignes des stocks
-    for (size_t i = 0; i < stockPrices.size(); ++i)
-    {
-        std::ostringstream price_stream;
-        price_stream.precision(2);
-        price_stream << std::fixed << stockPrices[i]; // Formater avec 2 décimales
-
-        table_data.push_back({std::to_string(i + 1), price_stream.str()});
-    }
-
-    return table_data;
-}
-
-export void StartUI(Game& game, TradingThread& trading_thread, auto& screen)
-{
-    auto stock_table_data = convertStockPricesToTable(game.getStockPrices());
-
-    // Création de la table FTXUI
-    Table stockTable(stock_table_data);
-
-    // Appliquer des décorations à la table
-    stockTable.SelectAll().Border(LIGHT);
-    std::vector<std::string> risk_options = {"Low", "Medium", "High"};
-    int selected_risk = 0;
+    //std::vector<std::string> risk_options = {"Low", "Medium", "High"};
+    //int selected_risk = 0;
     auto stock_increase_button = Button("+", [&] { game.setMinimumStock(game.getMinimumStock() + 10); });
     auto stock_decrease_button = Button("-", [&] { game.setMinimumStock(game.getMinimumStock() - 10); });
 
@@ -67,10 +41,9 @@ export void StartUI(Game& game, TradingThread& trading_thread, auto& screen)
                                                        10000, 75);
     auto upgrade3Button = Button("Buy", [&] { game.purchaseUpgrade(upgrade3); });
 
-    auto dropdownRisk = Dropdown(&risk_options, &selected_risk);
-    auto depositeButton = Button("Deposit", [&] { trading_thread.depositFunds(); });
-    auto withdrawButton = Button("Withdraw", [&] { trading_thread.withdrawFunds(); });
-    auto upgradeEngineButton = Button("Upgrade Engine", [&] { trading_thread.upgradeEngine(); });
+    //auto dropdownRisk = Dropdown(&risk_options, &selected_risk);
+    //auto depositeButton = Button("Deposit", [&] { trading_thread.depositFunds(); });
+    //auto withdrawButton = Button("Withdraw", [&] { trading_thread.withdrawFunds(); });
 
     auto button_container = Container::Vertical({
         stock_increase_button,
@@ -88,10 +61,9 @@ export void StartUI(Game& game, TradingThread& trading_thread, auto& screen)
         upgrade1Button,
         upgrade2Button,
         upgrade3Button,
-        dropdownRisk,
-        depositeButton,
-        withdrawButton,
-        upgradeEngineButton,
+        //dropdownRisk,
+        //depositeButton,
+        //withdrawButton,
     });
 
     auto layout = Renderer(button_container, [&]
@@ -196,29 +168,26 @@ export void StartUI(Game& game, TradingThread& trading_thread, auto& screen)
                          })),
                 }),
             }),
-            separator(),
+            /*separator(),
             vbox({
-                text("Trading Panel") | bold | color(Color::Blue),
+                text("Investments") | bold | color(Color::Blue),
                 hbox({
-                    text("Cash: $" + std::format("{0:.2f}", game.getTradingCash()) + "    ") | color(Color::Green),
-                    text("Stocks: $" + std::format("{0:.2f}", game.getTradingStocks()) + "    ") | color(Color::Yellow),
-                    text("Total: $" + std::format("{0:.2f}", game.getTradingTotal()) + "    ") | color(Color::Cyan),
+                    text("Risk Level: " + std::to_string(game.getTradingRiskLevel())) | color(Color::Red),
+
+                    dropdownRisk->Render(),
+                    filler(),
                 }),
+                separator(),
                 hbox({
                     depositeButton->Render(),
                     withdrawButton->Render(),
                 }),
-                text("Risk Level: " + std::to_string(game.getTradingRiskLevel())) | color(Color::Red),
-                separator(),
-                text("Stock Prices:") | bold | color(Color::Blue),
-                stockTable.Render(), // Affichage de la table des prix des stocks
+                hbox({
 
-                dropdownRisk->Render(),
-                /*hbox({
-                    upgradeEngineButton->Render(),
-                    text("Level: " + std::to_string(trading_thread.getRiskLevel())) | color(Color::Yellow),
-                }),*/
-            }),
+                }),
+                separator(),
+
+            }),*/
         }) | border;
     });
     screen.Loop(layout);
