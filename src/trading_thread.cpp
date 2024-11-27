@@ -1,4 +1,4 @@
-/*
+
 module;
 #include <iostream>
 #include <random>
@@ -7,7 +7,7 @@ module;
 #include <format>  // C++23 pour formater les chaînes de caractères
 
 export module trading_thread;
-
+/*
 import game;  // Importation du module Game
 
 export class TradingThread {

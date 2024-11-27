@@ -9,7 +9,7 @@ import ui;
 import timer_thread;
 import auto_clipper_thread;
 import wire_market_thread;
-import trading_thread;
+//import trading_thread;
 
 
 #include <windows.h>
